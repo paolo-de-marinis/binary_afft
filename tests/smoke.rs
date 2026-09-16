@@ -1,4 +1,4 @@
-use binary_toolkit::bits::bit_zero;
+use binary_toolkit::bits::*;
 
 #[test]
 fn una_stessa_costante_in_due_basi() {
@@ -12,4 +12,8 @@ fn collaudo_bit_zero() {
     assert_eq!(bit_zero(13), 1);
     assert_eq!(bit_zero(u64::MAX), 1);
     
+}
+#[test]
+fn collaudo_get_bit() {
+    assert_eq!(get_bit(13, 0), true);
 }
