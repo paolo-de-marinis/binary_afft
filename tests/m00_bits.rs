@@ -1,83 +1,134 @@
 use binary_toolkit::bits::*;
 
 #[test]
-fn test_constant_in_different_bases() {
-    assert_eq!(13u64, 0b1101u64);
-    assert_ne!(13u64, 0b1011u64);
+fn word_bits_round_trip() {
+    let words: [u64; 5] = [
+        0,
+        1,
+        13,
+        1u64 << 63,
+        u64::MAX,
+    ];
+
+    for x in words {
+        assert_eq!(from_bits(to_bits(x)), x);
+    }
 }
 
 #[test]
-fn test_get_bit() {
-    // 13 in binary is 1101
-    assert_eq!(get_bit(13, 0), true);
-    assert_eq!(get_bit(13, 1), false);
-    assert_eq!(get_bit(13, 2), true);
-    assert_eq!(get_bit(13, 3), true);
+fn bits_word_round_trip() {
+    // All coordinates are false.
+    let all_false: [bool; 64] = [false; 64];
+
+    // All coordinates are true.
+    let all_true: [bool; 64] = [true; 64];
+
+    // Exactly one coordinate is true.
+    let mut single_true: [bool; 64] = [false; 64];
+    single_true[37] = true;
+
+    // Alternating coordinates: false, true, false, true, ...
+    let mut alternating: [bool; 64] = [false; 64];
+
+    for i in 0..64 {
+        alternating[i] = i % 2 == 1;
+    }
+
+    let bit_arrays: [[bool; 64]; 4] = [
+        all_false,
+        all_true,
+        single_true,
+        alternating,
+    ];
+
+    for bits in bit_arrays {
+        assert_eq!(to_bits(from_bits(bits)), bits);
+    }
 }
 
 #[test]
-fn test_set_bit() {
-    // Setting a bit that is already set does not change the value
-    assert_eq!(set_bit(13, 0, true), 13);
+fn thirteen_has_expected_coordinates() {
+    let bits = to_bits(13);
+
+    for i in 0..64 {
+        let expected = i == 0 || i == 2 || i == 3;
+
+        assert_eq!(bits[i], expected);
+    }
 }
 
 #[test]
-fn test_toggle_bit() {
-    // 13 (1101) with bit 0 toggled becomes 12 (1100)
-    assert_eq!(toggle_bit(13, 0), 12);
+fn get_bit_reads_the_same_coordinate_as_to_bits() {
+    let words: [u64; 4] = [
+        13,
+        0xAAAAAAAAAAAAAAAA,
+        0x5555555555555555,
+        0x123456789ABCDEF0,
+    ];
 
-    // Involution property: toggle_bit(toggle_bit(x, i), i) == x
-    assert_eq!(toggle_bit(toggle_bit(13, 2), 2), 13);
+    for x in words {
+        for i in 0..64 {
+            assert_eq!(get_bit(x, i), to_bits(x)[i]);
+        }
+    }
 }
 
 #[test]
-fn test_to_bits() {
-    let x: u64 = 1;
+fn set_bit_changes_only_one_coordinate() {
+    let x: u64 = 13;
+    let index: usize = 5;
+    let value: bool = true;
 
-    // Initialize all entries to false (0)
-    let mut expected = [false; 64];
+    let before = to_bits(x);
+    let after = to_bits(set_bit(x, index, value));
+    for i in 0..64 {
+        if i==index {
+            assert_ne!(before[i], after[i]);
+        } else {
+            assert_eq!(before[i], after[i]);
+        }
+    }
+}    
 
-    // Set only the least significant bit
-    expected[0] = true;
+#[test]
+fn toggle_bit_is_an_involution() {
+    let x: u64 = 0x123456789ABCDEF0;
 
-    assert_eq!(to_bits(x), expected);
+    let indices: [usize; 6] = [
+        0,
+        1,
+        17,
+        32,
+        48,
+        63,
+    ];
+
+    for i in indices {
+        assert_eq!(toggle_bit(toggle_bit(x, i), i), x);
+    }
 }
 
 #[test]
-fn test_to_bits_13() {
-    let mut expected = [false; 64];
-
-    // 13 in binary is 1101.
-    // The array stores bits by increasing position:
-    // bits[i] is the bit with weight 2^i.
-    // Therefore the first entries are [1, 0, 1, 1].
-    expected[0] = true;
-    expected[1] = false;
-    expected[2] = true;
-    expected[3] = true;
-
-    assert_eq!(to_bits(13), expected);
+#[should_panic]
+fn bit_index_out_of_range_panics() {
+    get_bit(13, 64);
 }
 
 #[test]
-fn test_from_bits() {
-    let x: u64 = 1;
-    let mut expected: [bool; 64] = [false; 64];
+fn xor_matches_coordinate_addition() {
+    let x: u64 = 13;
+    let y: u64 = 101;
 
-    // Set only the least significant bit
-    expected[0] = true;
+    let x_bits = to_bits(x);
+    let y_bits = to_bits(y);
 
-    assert_eq!(from_bits(expected), x);
-}
+    let mut sum_bits: [bool; 64] = [false; 64];
 
-#[test]
-fn binary_coordinates_and_words_are_inverse() {
-    let x: u64 = 1;
-    let mut expected: [bool; 64] = [false; 64];
-    // Set only the least significant bit
-    expected[0] = true;
-    // Converting to bits and back must recover the original value
-    assert_eq!(from_bits(to_bits(x)), x);
-    // Converting to words and back must recover the original value
-    assert_eq!(to_bits(from_bits(expected)), expected);
+    for i in 0..64 {
+        sum_bits[i] = x_bits[i] ^ y_bits[i];
+    }
+
+    let coordinate_sum = from_bits(sum_bits);
+
+    assert_eq!(coordinate_sum, x ^ y);
 }
