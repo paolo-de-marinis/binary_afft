@@ -1,7 +1,9 @@
 use stdrandom::random_u128;
 use binary_toolkit::gf128::*;
-mod common;
-use common::*;
+#[path = "common/slow_reduce.rs"]
+mod slow_reduce_ref;
+
+use slow_reduce_ref::slow_reduce;
 
 #[test]
 fn reduction_matches_the_slow_reference() {
