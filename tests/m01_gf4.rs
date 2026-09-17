@@ -63,11 +63,11 @@ fn gf4_field_laws_hold() {
 #[test]
 #[should_panic]
 fn gf4_add_rejects_noncanonical_masks() {
-    let x= gf4_add(3, 10);
+    gf4_add(3, 10);
 }
 
 #[test]
 #[should_panic]
 fn gf4_mul_rejects_noncanonical_masks() {
-    let x= gf4_mul(3, 10);
+    gf4_mul(3, 10);
 }

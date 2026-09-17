@@ -5,3 +5,12 @@ version = 4
 [[package]]
 name = "binary_toolkit"
 version = "0.1.0"
+dependencies = [
+ "stdrandom",
+]
+
+[[package]]
+name = "stdrandom"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33837895a108afda749ac53edbb715125ccf9ceb1aa5076cc1f676a56c5b8d2a"
