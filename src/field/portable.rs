@@ -1,3 +1,5 @@
+use std::u128;
+
 use crate::bits::*;
 
 pub fn clmul(a: u64, b: u64) -> u128 {
@@ -45,13 +47,31 @@ pub fn mul_p128(a: u128, b: u128) -> u128 {
     reduce_p128(lo, hi)
 }
 
+
+
+
+
+fn spread_mask(i: u32) -> u128 {
+    u128::MAX/((1 << i) +1)
+}
+
+
 pub fn spread(a: u64) -> u128 {
-    let mut result: u128 = 0;
+    let mut result= a as u128;
+    /* Inefficient spread
     for i in 0..64 {
         result ^= (get_bit(a, i) as u128)<<2*i;
+    } 
+    */
+    for i in [32, 16, 8, 4, 2, 1]{
+        result = (result | (result << i)) & spread_mask(i) ;
     }
     result
 }
+
+
+
+
 
 pub fn spread128(a: u128) -> (u128, u128) {
     let a0 = a as u64;

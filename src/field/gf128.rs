@@ -1,7 +1,6 @@
 use crate::field::portable::{mul_p128,square_p128};
 use std::ops::*;
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Gf128(u128);
 impl Gf128 {
