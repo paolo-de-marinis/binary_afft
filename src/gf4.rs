@@ -1,4 +1,3 @@
-
 use crate::bits::*;
 
 pub fn gf4_add(left: u8, right: u8) -> u8 {

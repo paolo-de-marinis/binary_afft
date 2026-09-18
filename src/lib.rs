@@ -1,4 +1,4 @@
 pub mod bits;
+pub mod field;
 pub mod gf4;
-pub mod poly;
-pub mod gf128;
+pub mod polynomial;
