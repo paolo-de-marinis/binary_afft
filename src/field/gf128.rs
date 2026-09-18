@@ -25,6 +25,7 @@ impl Gf128 {
     }
     
     pub fn inverse(self: Self) -> Self {
+        assert!(self!=Self::ZERO, "Element ZERO of Gf128 has no multiplicative inverse");
         let mut uaux = self; // initialize to u1 = self^(2^1-1) = self
         let mut result = self;
         let v = [1, 2, 3, 6, 7, 8, 15, 30, 60, 120, 127];

@@ -28,3 +28,19 @@ fn square_matches_multiplication_by_itself() {
         assert_eq!(a.square(), a*a);
     }
 }
+#[test]
+fn multiplication_by_inverse_is_identity() {
+    for _ in 0..1000 {
+        let a = Gf128::from_u128(random_u128());
+        if a.to_u128() == 0 {
+            continue;
+        }
+        assert_eq!(Gf128::ONE, a.inverse()*a);
+    }
+}
+
+#[test]
+#[should_panic]
+fn inverse_of_zero_panics() {
+    Gf128::ZERO.inverse();
+}
