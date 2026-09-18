@@ -47,10 +47,6 @@ pub fn mul_p128(a: u128, b: u128) -> u128 {
     reduce_p128(lo, hi)
 }
 
-
-
-
-
 const fn spread_mask(i: u32) -> u128 {
     u128::MAX/((1 << i) +1)
 }
@@ -73,10 +69,6 @@ pub fn spread(a: u64) -> u128 {
     }
     result
 }
-
-
-
-
 
 pub fn spread128(a: u128) -> (u128, u128) {
     let a0 = a as u64;
