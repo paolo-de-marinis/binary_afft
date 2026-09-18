@@ -38,3 +38,8 @@ pub fn reduce_p128(l: u128, h: u128) -> u128 {
     low = low ^ overflow ^ (overflow << 1) ^ (overflow << 2) ^ (overflow << 7);
     low
 }
+
+pub fn mul_p128(a: u128, b: u128) -> u128 {
+    let (lo, hi) = clmul128(a, b);
+    reduce_p128(lo, hi)
+}
