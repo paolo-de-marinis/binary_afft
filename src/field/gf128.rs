@@ -1,4 +1,4 @@
-use super::portable;
+use crate::field::portable::{mul_p128,square_p128};
 use std::ops::*;
 
 
@@ -14,11 +14,14 @@ impl Gf128 {
     pub fn to_u128(self: Self) -> u128 {
         self.0
     }
+    pub fn square(self: Self) -> Self {
+        Self(square_p128(self.0))
+    }
 }
 impl Mul for Gf128 {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
-        Self(portable::mul_p128(self.0, other.0))
+        Self(mul_p128(self.0, other.0))
     }
 }
 impl Add for Gf128 {

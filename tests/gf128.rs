@@ -1,5 +1,5 @@
 use binary_toolkit::field::Gf128;
-
+use stdrandom::random_u128;
 #[test]
 fn gf128_public_api_works() {
     // Construction and reading are inverse.
@@ -19,4 +19,12 @@ fn gf128_public_api_works() {
 
     // The product reaches the backend.
     assert_eq!(Gf128::ONE * Gf128::GENERATOR, Gf128::GENERATOR);
+}
+
+#[test]
+fn square_matches_multiplication_by_itself() {
+    for _ in 0..1000 {
+        let a = Gf128::from_u128(random_u128());
+        assert_eq!(a.square(), a*a);
+    }
 }

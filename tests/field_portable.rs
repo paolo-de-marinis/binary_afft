@@ -28,3 +28,11 @@ fn reduction_matches_the_slow_reference() {
         assert_eq!(reduce_p128(l, h), slow_reduce(l, h));
     }
 }    
+
+#[test]
+fn test_spread() {
+    let a: u64 = 0b111111111;
+    let b: u128 = 0b10101010101010101;
+    let c = spread(a);
+    assert_eq!(c, b);
+}
