@@ -115,7 +115,7 @@ They do not define polynomial or field multiplication.
 
 ### Direct GF(4) model
 
-`src/gf4.rs`
+`examples/gf4.rs`
 
 A small didactic implementation of
 
@@ -133,7 +133,7 @@ Implemented operations:
 - addition;
 - multiplication.
 
-This module is mainly a small reference model for understanding how a polynomial relation induces field arithmetic.
+It is a small reference model for understanding how a polynomial relation induces field arithmetic, kept as a Cargo example. It is not part of the library and not exposed by the public API; its tests live in the example itself and run with `cargo test --example gf4`.
 
 ### Polynomial utilities
 
@@ -290,7 +290,6 @@ The current source tree is:
 ```text
 src/
 ├── bits.rs
-├── gf4.rs
 ├── lib.rs
 ├── polynomial.rs
 │
@@ -304,7 +303,6 @@ src/
 ```rust
 pub mod bits;
 pub mod field;
-pub mod gf4;
 pub mod polynomial;
 ```
 
@@ -329,7 +327,6 @@ tests/
 │   └── slow_reduce.rs
 │
 ├── bits.rs
-├── gf4.rs
 ├── polynomial.rs
 └── field_portable.rs
 ```

@@ -1,4 +1,30 @@
-use binary_toolkit::gf4::*;
+use binary_toolkit::bits::*;
+
+pub fn gf4_add(left: u8, right: u8) -> u8 {
+    assert!(left < 4);
+    assert!(right < 4);
+    left ^ right
+}
+
+pub fn gf4_mul(left: u8, right: u8) -> u8 {
+    assert!(left < 4);
+    assert!(right < 4);
+    let a = get_bit(left as u64, 0) as u8;
+    let b = get_bit(left as u64, 1) as u8;
+    let c = get_bit(right as u64, 0) as u8;
+    let d = get_bit(right as u64, 1) as u8;
+    (a&c^b&d)|((a&d^b&c^b&d) <<1)
+}
+
+fn main() {
+    let alpha: u8 = 2;
+    assert_eq!(gf4_add(alpha, 1), 3);
+    assert_eq!(gf4_mul(alpha, alpha), 3);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 
 #[test]
 fn gf4_generator_satisfies_defining_relation() {
@@ -70,4 +96,5 @@ fn gf4_add_rejects_noncanonical_masks() {
 #[should_panic]
 fn gf4_mul_rejects_noncanonical_masks() {
     gf4_mul(3, 10);
+}
 }
