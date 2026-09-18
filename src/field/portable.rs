@@ -51,10 +51,15 @@ pub fn mul_p128(a: u128, b: u128) -> u128 {
 
 
 
-fn spread_mask(i: u32) -> u128 {
+const fn spread_mask(i: u32) -> u128 {
     u128::MAX/((1 << i) +1)
 }
-
+pub const M32: u128 = spread_mask(32);
+pub const M16: u128 = spread_mask(16);
+pub const M8: u128 = spread_mask(8);
+pub const M4: u128 = spread_mask(4);
+pub const M2: u128 = spread_mask(2);
+pub const M1: u128 = spread_mask(1);
 
 pub fn spread(a: u64) -> u128 {
     let mut result= a as u128;
@@ -63,8 +68,8 @@ pub fn spread(a: u64) -> u128 {
         result ^= (get_bit(a, i) as u128)<<2*i;
     } 
     */
-    for i in [32, 16, 8, 4, 2, 1]{
-        result = (result | (result << i)) & spread_mask(i) ;
+    for (i,m) in [(32,M32), (16,M16), (8,M8), (4,M4), (2,M2), (1,M1)]{
+        result = (result | (result << i)) & m;
     }
     result
 }
