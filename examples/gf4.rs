@@ -1,4 +1,4 @@
-use binary_toolkit::bits::*;
+use binary_afft::bits::*;
 
 pub fn gf4_add(left: u8, right: u8) -> u8 {
     assert!(left < 4);

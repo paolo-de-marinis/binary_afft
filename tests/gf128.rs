@@ -1,4 +1,4 @@
-use binary_toolkit::field::Gf128;
+use binary_afft::field::Gf128;
 use stdrandom::random_u128;
 #[test]
 fn gf128_public_api_works() {

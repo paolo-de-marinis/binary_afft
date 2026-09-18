@@ -1,5 +1,5 @@
 use stdrandom::random_u128;
-use binary_toolkit::field::portable::*;
+use binary_afft::field::portable::*;
 #[path = "common/slow_clmul.rs"]
 mod slow_clmul_ref;
 #[path = "common/slow_reduce.rs"]

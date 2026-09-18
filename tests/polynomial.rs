@@ -1,4 +1,4 @@
-use binary_toolkit::polynomial::poly_degree;
+use binary_afft::polynomial::poly_degree;
 
 #[test]
 fn zero_polynomial_has_no_degree() {

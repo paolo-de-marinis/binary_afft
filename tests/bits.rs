@@ -1,4 +1,4 @@
-use binary_toolkit::bits::*;
+use binary_afft::bits::*;
 
 #[test]
 fn word_bits_round_trip() {

@@ -1,4 +1,4 @@
-# binary_toolkit
+# binary_afft
 
 A Rust toolkit for studying and implementing efficient arithmetic over binary extension fields, with the goal of building a high-performance additive FFT backend over $\mathbb F_{2^{128}}$.
 
