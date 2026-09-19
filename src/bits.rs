@@ -4,6 +4,11 @@ pub fn get_bit(x: u64, i: usize) -> bool {
     ((x >> i) & 1) != 0
 }
 
+pub fn get_bit_u128(x: u64, i: usize) -> u128 {
+    assert!(i<64);
+    ((x >> i) & 1) as u128
+}
+
 pub fn set_bit(x: u64, i: usize, value: bool) -> u64 {
     assert!(i<64);
     let mask: u64 = 1 << i;
