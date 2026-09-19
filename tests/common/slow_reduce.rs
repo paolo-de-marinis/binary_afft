@@ -1,3 +1,5 @@
+// `as u128` is deliberate: it marks the literal as a 128-bit word.
+#[allow(clippy::unnecessary_cast)]
 pub fn slow_reduce(l: u128, h: u128) -> u128 {
     let mut v = [false; 256];
     for i in 0..256 {

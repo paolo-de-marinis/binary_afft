@@ -1,5 +1,3 @@
-use std::u128;
-
 use crate::bits::*;
 
 pub fn clmul(a: u64, b: u64) -> u128 {
@@ -73,7 +71,7 @@ pub fn spread(a: u64) -> u128 {
 pub fn spread128(a: u128) -> (u128, u128) {
     let a0 = a as u64;
     let a1 = (a >> 64) as u64;
-    // Karatsuba products
+    // Squares of the two halves: the cross term vanishes in characteristic two.
     let p0 = spread(a0);
     let p2 = spread(a1);
     

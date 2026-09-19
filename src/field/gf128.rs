@@ -1,8 +1,10 @@
 use crate::field::portable::{mul_p128,square_p128};
-use std::ops::*;
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Gf128(u128);
+// `self: Self` is deliberate: it keeps the receiver type visible in every signature.
+#[allow(clippy::needless_arbitrary_self_type)]
 impl Gf128 {
     pub const ZERO: Self = Self(0);
     pub const ONE: Self = Self(1);
@@ -40,7 +42,10 @@ impl Gf128 {
             }
         }
 
+        // Save u7 before building u8.
         uaux = result;
+
+        // Build u8 = u7^2 * u1, with u1 = self.
         result = result.square()*self;
         
         for i in 6..v.len(){
