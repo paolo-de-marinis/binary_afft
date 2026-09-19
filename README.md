@@ -675,3 +675,9 @@ additive FFT
 ```
 
 From here on the work moves above the field: `cantor.rs` will build the evaluation domain, and `afft/` the transforms. Both operate on `Gf128` values and never on the words inside them.
+
+## License
+
+Unless otherwise noted, the code in this repository, including its prior revisions, is licensed under the MIT License.
+
+See [LICENSE](LICENSE) for details.
