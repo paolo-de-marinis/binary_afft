@@ -68,22 +68,25 @@ fn gf4_field_laws_hold() {
         }
     }
 
-    let mut has_mul_inverse = false;
-    let mut has_sum_inverse = false;
     for x in 1..4 {
-        for y in 1..4 {
+        let mut has_mul_inverse = false;
+        let mut has_sum_inverse = false;
+
+        for y in 0..4 {
             if gf4_mul(x, y) == 1 {
                 has_mul_inverse = true;
             }
             if gf4_add(x, y) == 0 {
                 has_sum_inverse = true;
             }
-            if has_mul_inverse && has_sum_inverse == true {
+            if has_mul_inverse && has_sum_inverse {
                 break;
             }
         }
-        assert_eq!(has_mul_inverse && has_sum_inverse,true);
-    }    
+
+        assert!(has_mul_inverse);
+        assert!(has_sum_inverse);
+    }
 }
 
 #[test]
