@@ -67,12 +67,16 @@ impl Mul for Gf128 {
         Self(mul_p128(self.0, other.0))
     }
 }
+// In characteristic two, addition of coordinates is XOR.
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl Add for Gf128 {
     type Output = Self;
     fn add(self, other: Self) -> Self {
         Self(self.0^other.0)
     }
 }
+// In characteristic two, -b = b, so subtracting is adding.
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl Sub for Gf128 {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
