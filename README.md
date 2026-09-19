@@ -281,6 +281,50 @@ Because the low part of the modulus is sparse, reduction can be implemented usin
 
 The optimized implementation is checked against an independent slow reference based on coefficient-by-coefficient polynomial reduction.
 
+### Field product on words
+
+```rust
+pub fn mul_p128(a: u128, b: u128) -> u128
+```
+
+This composes the two primitives above: `clmul128` builds the wide product, `reduce_p128` brings it back below degree 128. Its output is already the canonical representative, so it is the word-level operation the field type delegates to.
+
+### Squaring by bit spreading
+
+In characteristic two every mixed term of a square cancels, so
+
+```math
+A(X)^2=\sum_{i=0}^{127}c_iX^{2i}.
+```
+
+No coefficient has to be computed: each one only moves from index $i$ to index $2i$, and every odd position becomes zero.
+
+```rust
+pub fn spread(a: u64) -> u128
+pub fn spread128(a: u128) -> (u128, u128)
+pub fn square_p128(a: u128) -> u128
+```
+
+`spread` performs that relocation for one 64-bit half in six masking stages, with $s=32,16,8,4,2,1$:
+
+```math
+z \leftarrow (z \vee (z \ll s)) \wedge M_s.
+```
+
+The masks alternate $s$ zeros and $s$ ones and are computed once as compile-time constants from the identity
+
+```math
+M_s=\frac{2^{128}-1}{2^{s}+1}.
+```
+
+`spread128` splits the operand into halves and spreads each one, which is enough because the cross term of a square vanishes:
+
+```math
+A(X)^2=a_0(X)^2+a_1(X)^2X^{128}.
+```
+
+`square_p128` then reduces that pair. Spreading replaces the wide product, not the reduction.
+
 ---
 
 ## Current module tree
@@ -295,6 +339,7 @@ src/
 │
 └── field/
     ├── mod.rs
+    ├── gf128.rs
     └── portable.rs
 ```
 
@@ -309,10 +354,13 @@ pub mod polynomial;
 and `src/field/mod.rs` contains:
 
 ```rust
+mod gf128;
 pub mod portable;
+
+pub use gf128::Gf128;
 ```
 
-At this stage there is deliberately no `field/gf128.rs` yet.
+The `gf128` module itself is private: the type reaches callers through the re-export, as `binary_afft::field::Gf128`. The backend stays public so the tests and future benchmarks can measure it directly.
 
 ---
 
@@ -328,14 +376,13 @@ tests/
 │
 ├── bits.rs
 ├── polynomial.rs
-└── field_portable.rs
+├── field_portable.rs
+└── gf128.rs
 ```
 
-`field_portable.rs` covers the current portable backend:
+`field_portable.rs` covers the word-level backend: `clmul` and `clmul128` against the convolution oracle, `reduce_p128` against the reduction oracle, and `spread`.
 
-- `clmul`;
-- `clmul128`;
-- `reduce_p128`.
+`gf128.rs` covers the public type: construction, constants and operators on fixed values; `square` against `a * a`; `inverse` through `a.inverse() * a == ONE`; and the panic on inverting `ZERO`. It compares the type against operations that are already verified, rather than repeating the oracles.
 
 The slow implementations under `tests/common/` are deliberately simple independent oracles.
 
@@ -363,54 +410,75 @@ Correctness is established incrementally before optimization work is introduced.
 
 ---
 
-## Next milestone: the `Gf128` type
+## The `Gf128` type
 
-The next source file will be
-
-```text
-src/field/gf128.rs
-```
-
-and will introduce the mathematical field-element type
+`src/field/gf128.rs`
 
 ```rust
 pub struct Gf128(u128);
 ```
 
-The purpose of this type is to distinguish
+A tuple struct with a private field: the representation is still one `u128`, but the type separates a raw machine word from an element of the field. `from_u128` and `to_u128` are the only way across that boundary, and neither changes basis nor reduces.
 
-```text
-u128
+It derives `Clone`, `Copy`, `Debug`, `PartialEq` and `Eq`. Copies are implicit because the only datum is a word; equality compares that word, which is meaningful because representatives are canonical.
+
+### Constants and conversions
+
+```rust
+pub const ZERO: Self;       // word 0
+pub const ONE: Self;        // word 1
+pub const GENERATOR: Self;  // word 0b10, the class alpha = [X]
+
+pub fn from_u128(bits: u128) -> Self
+pub fn to_u128(self) -> u128
 ```
 
-as a raw machine word from
+`GENERATOR` names the element that generates $F$ as an algebra over $\mathbb F_2$, since $F=\mathbb F_2[\alpha]$. It does not claim to generate the multiplicative group.
 
-```text
-Gf128
+### Operators
+
+The four operations are defined once each, in the standard traits, so callers write `a + b` and `a * b`:
+
+| Trait | Behaviour |
+|---|---|
+| `Add` | XOR of the two words |
+| `Sub` | identical to `Add`: in characteristic two, subtracting is adding |
+| `Neg` | the identity, because $-a=a$ |
+| `Mul` | reads both words, calls `mul_p128`, wraps the result |
+
+There is no inherent method with the same name as an operator, and no `Div`, `pow`, `AddAssign` or `MulAssign` yet.
+
+### Squaring and inversion
+
+```rust
+pub fn square(self) -> Self
+pub fn repeated_square(self, exp: usize) -> Self
+pub fn inverse(self) -> Self
 ```
 
-as an element of the fixed field.
+`square` delegates to `square_p128`, so the spreading stages stay in the backend. `repeated_square` applies it `exp` times, which is the Frobenius power $a^{2^{exp}}$ the inversion chain needs.
 
-The intended API will include operations such as:
+`inverse` uses Itoh–Tsujii. Writing $u_k=a^{2^k-1}$, the recurrence is
 
-```text
-ZERO
-ONE
-
-from_u128
-to_u128
-
-add
-mul
-square
-inverse
+```math
+u_{r+s}=u_r^{2^s}u_s,
+\qquad
+u_1=a,
+\qquad
+a^{-1}=u_{127}^2.
 ```
 
-and later the corresponding standard Rust operator traits.
+The implementation walks the addition chain
 
-`Gf128` should not contain Karatsuba or reduction logic directly.
+```text
+1 → 2 → 3 → 6 → 7 → 8 → 15 → 30 → 60 → 120 → 127
+```
 
-Conceptually:
+reusing a single saved intermediate as the second factor: $u_1$ for the first steps, then $u_7$ once the chain reaches it. That costs ten field multiplications and 127 squarings, against the 126 multiplications of plain binary exponentiation.
+
+Inverting `ZERO` is a contract violation, not a recoverable case: the method asserts and panics.
+
+### Where the work happens
 
 ```text
 Gf128(a)
@@ -423,11 +491,13 @@ field backend
 Gf128(c)
 ```
 
-The current backend is `field::portable`.
+The current backend is `field::portable`. `Gf128` contains no Karatsuba, no spreading and no reduction of its own.
 
 ---
 
 ## Future hardware backend
+
+Deferred until after the transforms, for the reason given in the roadmap. Sketched here only so the layer it belongs to is fixed in advance.
 
 A later stage will introduce
 
@@ -468,7 +538,7 @@ The subspaces are
 ```math
 W_i
 =
-\operatorname{span}_{\mathbb F_2}
+\mathrm{span}_{\mathbb F_2}
 \{\beta_0,\ldots,\beta_{i-1}\}.
 ```
 
@@ -561,8 +631,6 @@ specialized squaring
         ↓
 Itoh–Tsujii inversion
         ↓
-hardware PCLMUL backend
-        ↓
 Cantor special basis
         ↓
 naive additive evaluation
@@ -570,7 +638,11 @@ naive additive evaluation
 general AFFT
         ↓
 dyadic AFFT
+        ↓
+hardware backend and performance work
 ```
+
+Hardware multiplication is deliberately last. It changes how fast the field arithmetic runs, not what the transforms compute, so it is worth doing once there is something whose speed actually matters.
 
 ---
 
@@ -578,40 +650,28 @@ dyadic AFFT
 
 Currently implemented:
 
-```math
-\boxed{
-\mathbb F_2
-\longrightarrow
-\mathbb F_2[X]
-\longrightarrow
-\text{wide carry-less product}
-\longrightarrow
-\text{specialized reduction modulo }p_{128}
-}
-```
-
-Current code milestone:
-
 ```text
-bits
-  ↓
-clmul
-  ↓
-clmul128
-  ↓
-reduce_p128
+binary coordinates
+        ↓
+portable carry-less multiplication
+        ↓
+specialized GF(2^128) reduction
+        ↓
+Gf128
+        ↓
+specialized squaring
+        ↓
+Itoh–Tsujii inversion
 ```
+
+The portable field layer is complete for the current milestone: `Gf128` supports addition, subtraction, negation, multiplication, squaring and inversion, and the backend behind it is checked against independent oracles. The Cantor basis, the transforms and the hardware backend are still ahead.
 
 Next:
 
-```math
-\boxed{
-\texttt{Gf128}
-\longrightarrow
-\texttt{square}
-\longrightarrow
-\texttt{inverse}
-}
+```text
+Cantor special basis
+        ↓
+additive FFT
 ```
 
-After the field API is complete, development moves toward the Cantor basis and the additive FFT.
+From here on the work moves above the field: `cantor.rs` will build the evaluation domain, and `afft/` the transforms. Both operate on `Gf128` values and never on the words inside them.
