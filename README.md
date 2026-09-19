@@ -676,6 +676,14 @@ additive FFT
 
 From here on the work moves above the field: `cantor.rs` will build the evaluation domain, and `afft/` the transforms. Both operate on `Gf128` values and never on the words inside them.
 
+## References
+
+The additive FFT part of the project is developed with reference to:
+
+- S.-J. Lin, W.-H. Chung, Y. S. Han, *Novel Polynomial Basis and Its Application to Reed-Solomon Erasure Codes*, arXiv:1404.3458.
+- N. Coxon, *Fast Transforms over Finite Fields of Characteristic Two*, arXiv:1807.07785.
+- S. Samanta, M. Badakhshan, G. Gong, *On the Additive FFT Techniques over Binary Extension Fields*, arXiv:2608.20855.
+
 ## License
 
 Unless otherwise noted, the code in this repository, including its prior revisions, is licensed under the MIT License.
