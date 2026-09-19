@@ -23,9 +23,9 @@ fn clmuls_match_reference() {
 #[test]
 fn reduction_matches_the_slow_reference() {
     for _ in 0..10000 {
-        let l = random_u128();
-        let h = random_u128();  
-        assert_eq!(reduce_p128(l, h), slow_reduce(l, h));
+        let lo = random_u128();
+        let hi = random_u128();
+        assert_eq!(reduce_p128(lo, hi), slow_reduce(lo, hi));
     }
 }    
 

@@ -27,17 +27,22 @@ pub fn clmul128(a: u128, b: u128) -> (u128,u128) {
 }
 
 // Reduce a polynomial modulo p(X) = X^128 + X^7 + X^2 + X + 1.
-pub fn reduce_p128(l: u128, h: u128) -> u128 {
-    // First fold: keep the coefficients of h that remain below index 128 
+// Keep the named final remainder aligned with the reduction derivation.
+#[allow(clippy::let_and_return)]
+pub fn reduce_p128(lo: u128, hi: u128) -> u128 {
+    // First fold: keep the coefficients of hi that remain below index 128
     // and reduce them using X^128 = X^7 + X^2 + X + 1 modulo p(X).
-    let mut low = l ^ h ^ (h << 1) ^ (h << 2) ^ (h << 7);
-    // Recover the coefficients of hX , hX^2 and hX^7 
-    // that crossed index 127 and reindex them to prepare them for reduction
-    let overflow = (h >> 127) ^ (h >> 126) ^ (h >> 121);
-    // Second fold: replace the remaining X^128 factor in the overflow
-    // and reduce them using X^128 = X^7 + X^2 + X + 1 modulo p(X).
-    low = low ^ overflow ^ (overflow << 1) ^ (overflow << 2) ^ (overflow << 7);
-    low
+    let fold_lo = lo ^ hi ^ (hi << 1) ^ (hi << 2) ^ (hi << 7);
+
+    // Recover the coefficients of hi*X, hi*X^2, and hi*X^7
+    // that crossed index 127 and reindex them to prepare them for reduction.
+    let fold_hi = (hi >> 127) ^ (hi >> 126) ^ (hi >> 121);
+
+    // Second fold: replace the remaining X^128 factor in fold_hi
+    // and reduce it using X^128 = X^7 + X^2 + X + 1 modulo p(X).
+    let reduced = fold_lo ^ fold_hi ^ (fold_hi << 1) ^ (fold_hi << 2) ^ (fold_hi << 7);
+
+    reduced
 }
 
 pub fn mul_p128(a: u128, b: u128) -> u128 {
@@ -62,8 +67,8 @@ pub fn spread(a: u64) -> u128 {
         result ^= (get_bit(a, i) as u128)<<2*i;
     } 
     */
-    for (i,m) in [(32,M32), (16,M16), (8,M8), (4,M4), (2,M2), (1,M1)]{
-        result = (result | (result << i)) & m;
+    for (shift, mask) in [(32, M32), (16, M16), (8, M8), (4, M4), (2, M2), (1, M1)] {
+        result = (result | (result << shift)) & mask;
     }
     result
 }

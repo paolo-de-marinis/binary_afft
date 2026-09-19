@@ -86,6 +86,6 @@ impl Sub for Gf128 {
 impl Neg for Gf128 {
     type Output = Self;
     fn neg(self) -> Self {
-        Self(self.0)
+        self
     }
 }
