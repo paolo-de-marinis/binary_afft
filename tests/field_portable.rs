@@ -4,12 +4,14 @@ use binary_afft::field::portable::*;
 mod slow_clmul_ref;
 #[path = "common/slow_reduce.rs"]
 mod slow_reduce_ref;
+#[path = "common/clmul_vartime.rs"]
+mod clmul_vartime_ref;
 
 use slow_clmul_ref::slow_clmul;
 use slow_reduce_ref::slow_reduce;
-
+use clmul_vartime_ref::clmul_vartime;
 #[test]
-fn clmuls_match_reference() {
+fn clmul_match_reference() {
     for _ in 0..1000 {
         let a = random_u128() as u64;
         let b = random_u128() as u64;
@@ -18,7 +20,16 @@ fn clmuls_match_reference() {
         let b = random_u128();
         assert_eq!(clmul128(a, b), slow_clmul(a, b));
     }
-}    
+}
+
+#[test]
+fn clmul_match_vartime() {
+    for _ in 0..1000 {
+        let a = random_u128() as u64;
+        let b = random_u128() as u64;
+        assert_eq!(clmul(a,b), clmul_vartime(a,b));
+    }
+} 
 
 #[test]
 fn reduction_matches_the_slow_reference() {
