@@ -5,3 +5,6 @@ edition = "2024"
 
 [dev-dependencies]
 stdrandom = "0.3.0"
+
+[dependencies]
+subtle = "2.6.1"

@@ -1,5 +1,6 @@
 use crate::field::portable::{mul_p128,square_p128};
 use std::ops::{Add, Mul, Neg, Sub};
+use subtle::{Choice,ConditionallySelectable,ConstantTimeEq,CtOption};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Gf128(u128);
@@ -89,3 +90,16 @@ impl Neg for Gf128 {
         self
     }
 }
+
+impl ConstantTimeEq for Gf128 {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.0.ct_eq(&other.0)
+    }
+}
+
+impl ConditionallySelectable for Gf128 {
+    fn conditional_select(a: &Self,b: &Self,choice: Choice) -> Self {
+        Self(u128::conditional_select(&a.0,&b.0,choice,))
+    }
+}
+

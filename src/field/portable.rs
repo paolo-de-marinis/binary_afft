@@ -3,9 +3,9 @@ use crate::bits::*;
 pub fn clmul(a: u64, b: u64) -> u128 {
     let mut result: u128 = 0;
     for i in 0..64 {
-            let bit = get_bit_u128(b, i as usize);
-            let mask = 0u128.wrapping_sub(bit);        
-            result ^= ((a as u128) << i) & mask;
+        let bit = get_bit_u128(b, i as usize);
+        let mask = 0u128.wrapping_sub(bit);        
+        result ^= ((a as u128) << i) & mask;
         }
     result
 }
