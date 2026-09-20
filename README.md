@@ -710,11 +710,13 @@ From here on the work moves above the field: `cantor.rs` will build the evaluati
 
 ## References
 
-The additive FFT part of the project is developed with reference to:
+The additive FFT part of the project will primarily build on:
 
 - S.-J. Lin, W.-H. Chung, Y. S. Han, *Novel Polynomial Basis and Its Application to Reed-Solomon Erasure Codes*, arXiv:1404.3458.
 - N. Coxon, *Fast Transforms over Finite Fields of Characteristic Two*, arXiv:1807.07785.
 - S. Samanta, M. Badakhshan, G. Gong, *On the Additive FFT Techniques over Binary Extension Fields*, arXiv:2608.20855.
+
+The complete bibliography for finite-field arithmetic, Rust, constant-time programming, and additive FFTs is collected in the [study notes](docs/binary_fields_rust.pdf).
 
 ## License
 
