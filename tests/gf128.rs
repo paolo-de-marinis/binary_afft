@@ -1,5 +1,6 @@
 use binary_afft::field::Gf128;
 use stdrandom::random_u128;
+use subtle::{Choice,ConditionallySelectable,ConstantTimeEq};
 #[test]
 fn gf128_public_api_works() {
     // Construction and reading are inverse.
@@ -43,4 +44,24 @@ fn multiplication_by_inverse_is_identity() {
 #[should_panic]
 fn inverse_of_zero_panics() {
     Gf128::ZERO.inverse();
+}
+
+#[test]
+fn constant_time_equality_works() {
+    let a = Gf128::from_u128(42);
+    let b = Gf128::from_u128(42);
+    let c = Gf128::from_u128(43);
+
+    assert!(bool::from(a.ct_eq(&b)));
+    assert!(!bool::from(a.ct_eq(&c)));
+}
+
+#[test]
+fn conditional_selection_works() {
+    let a = Gf128::from_u128(42);
+    let b = Gf128::from_u128(43);
+
+    assert_eq!(Gf128::conditional_select(&a,&b,Choice::from(0)),a);
+
+    assert_eq!(Gf128::conditional_select(&a,&b,Choice::from(1)),b);
 }
