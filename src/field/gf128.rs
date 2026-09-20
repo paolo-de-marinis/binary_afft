@@ -28,7 +28,7 @@ impl Gf128 {
     }
     
 
-    pub fn inverse_or_zero(self: Self) -> Self {
+    fn inverse_or_zero(self: Self) -> Self {
         let mut uaux = self; // initialize to u1 = self^(2^1-1) = self
         let mut result = self;
         let v = [1, 2, 3, 6, 7, 8, 15, 30, 60, 120, 127];
