@@ -36,14 +36,14 @@ fn multiplication_by_inverse_is_identity() {
         if a.to_u128() == 0 {
             continue;
         }
-        assert_eq!(Gf128::ONE, a.inverse()*a);
+        assert_eq!(Gf128::ONE, a.inverse().unwrap_or(Gf128::ZERO)*a);
     }
 }
 
 #[test]
-#[should_panic]
 fn inverse_of_zero_panics() {
-    Gf128::ZERO.inverse();
+    let inverse=Gf128::ZERO.inverse();
+    assert!(bool::from(inverse.is_none()))
 }
 
 #[test]

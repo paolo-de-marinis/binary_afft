@@ -27,8 +27,8 @@ impl Gf128 {
         result
     }
     
-    pub fn inverse(self: Self) -> Self {
-        assert!(self!=Self::ZERO, "Element ZERO of Gf128 has no multiplicative inverse");
+
+    pub fn inverse_or_zero(self: Self) -> Self {
         let mut uaux = self; // initialize to u1 = self^(2^1-1) = self
         let mut result = self;
         let v = [1, 2, 3, 6, 7, 8, 15, 30, 60, 120, 127];
@@ -60,6 +60,15 @@ impl Gf128 {
         }
         result.square()
     }
+
+
+
+    pub fn inverse(self: Self) -> CtOption<Gf128> {
+        let candidate = self.inverse_or_zero();
+        let is_non_zero = !candidate.ct_eq(&Gf128::ZERO);
+        CtOption::new(candidate, is_non_zero)
+    }
+
 }    
 
 impl Mul for Gf128 {
@@ -99,7 +108,7 @@ impl ConstantTimeEq for Gf128 {
 
 impl ConditionallySelectable for Gf128 {
     fn conditional_select(a: &Self,b: &Self,choice: Choice) -> Self {
-        Self(u128::conditional_select(&a.0,&b.0,choice,))
+        Self(u128::conditional_select(&a.0,&b.0,choice))
     }
 }
 
