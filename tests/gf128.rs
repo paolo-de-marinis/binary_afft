@@ -41,7 +41,7 @@ fn multiplication_by_inverse_is_identity() {
 }
 
 #[test]
-fn inverse_of_zero_panics() {
+fn inverse_of_zero_is_none() {
     let inverse=Gf128::ZERO.inverse();
     assert!(bool::from(inverse.is_none()))
 }
