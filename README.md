@@ -37,6 +37,14 @@ and toward additive FFT algorithms over binary fields.
 
 General abstractions are introduced only when they are required by the actual implementation.
 
+## Documentation
+
+The current English study notes are available in:
+
+`docs/binary_fields_rust.pdf`
+
+They develop the algebra, representation, implementation, verification, and source-level constant-time discipline used by the project.
+
 ---
 
 ## Architecture
@@ -104,10 +112,13 @@ Code above `Gf128` should not need to know whether field multiplication is imple
 
 Basic operations on `u64` words interpreted as vectors over $\mathbb F_2$:
 
-- read a bit;
+- read a bit as a Boolean predicate with `get_bit`;
+- read a bit as a numeric control word with `get_bit_u128`;
 - set a bit;
 - toggle a bit;
 - convert between `u64` and `[bool; 64]`.
+
+The Boolean API remains useful for ordinary coordinate manipulation, while `get_bit_u128` is used where a sensitive bit must stay as data instead of becoming control flow.
 
 These functions manipulate binary coordinates only.
 
@@ -196,6 +207,10 @@ then the coefficient of $X^k$ in the result is
 ```
 
 No carries are generated.
+
+The current implementation always performs the same 64 loop iterations. Each bit of `b` is read through `get_bit_u128`, expanded to a full-word mask with `wrapping_sub`, and used to select the corresponding shifted contribution without an explicit data-dependent branch.
+
+The earlier branch-based implementation is retained only under `tests/common/clmul_vartime.rs` as a functional regression reference.
 
 ### 128 × 128 carry-less multiplication
 
@@ -371,6 +386,7 @@ Integration tests are named after the component they exercise:
 ```text
 tests/
 ├── common/
+│   ├── clmul_vartime.rs
 │   ├── slow_clmul.rs
 │   └── slow_reduce.rs
 │
@@ -380,9 +396,9 @@ tests/
 └── gf128.rs
 ```
 
-`field_portable.rs` covers the word-level backend: `clmul` and `clmul128` against the convolution oracle, `reduce_p128` against the reduction oracle, and `spread`.
+`field_portable.rs` covers the word-level backend: `clmul` and `clmul128` against the convolution oracle, `clmul` against the earlier branch-based implementation, `reduce_p128` against the reduction oracle, and `spread`.
 
-`gf128.rs` covers the public type: construction, constants and operators on fixed values; `square` against `a * a`; `inverse` through `a.inverse() * a == ONE`; and the panic on inverting `ZERO`. It compares the type against operations that are already verified, rather than repeating the oracles.
+`gf128.rs` covers the public type: construction, constants and operators on fixed values; `square` against `a * a`; inversion through a `CtOption<Gf128>`; the invalid zero case; constant-time equality; and conditional selection. It compares the type against operations that are already verified, rather than repeating the oracles.
 
 The slow implementations under `tests/common/` are deliberately simple independent oracles.
 
@@ -453,7 +469,7 @@ There is no inherent method with the same name as an operator, and no `Div`, `po
 ```rust
 pub fn square(self) -> Self
 pub fn repeated_square(self, exp: usize) -> Self
-pub fn inverse(self) -> Self
+pub fn inverse(self) -> CtOption<Gf128>
 ```
 
 `square` delegates to `square_p128`, so the spreading stages stay in the backend. `repeated_square` applies it `exp` times, which is the Frobenius power $a^{2^{exp}}$ the inversion chain needs.
@@ -476,7 +492,15 @@ The implementation walks the addition chain
 
 reusing a single saved intermediate as the second factor: $u_1$ for the first steps, then $u_7$ once the chain reaches it. That costs ten field multiplications and 127 squarings, against the 126 multiplications of plain binary exponentiation.
 
-Inverting `ZERO` is a contract violation, not a recoverable case: the method asserts and panics.
+The arithmetic core is a private `inverse_or_zero` method computing
+
+```math
+J(a)=a^{2^{128}-2}.
+```
+
+For nonzero inputs, $J(a)=a^{-1}$, while $J(0)=0$. The public `inverse` method therefore returns a `CtOption<Gf128>`: the candidate is always computed, and its validity is carried separately as a `subtle::Choice`. Inverting `ZERO` no longer panics; it returns an invalid `CtOption`.
+
+`Gf128` also implements `ConstantTimeEq` and `ConditionallySelectable` by delegating to the internal `u128` through the `subtle` crate.
 
 ### Where the work happens
 
@@ -631,6 +655,8 @@ specialized squaring
         ↓
 Itoh–Tsujii inversion
         ↓
+source-level constant-time portable backend
+        ↓
 Cantor special basis
         ↓
 naive additive evaluation
@@ -662,9 +688,15 @@ Gf128
 specialized squaring
         ↓
 Itoh–Tsujii inversion
+        ↓
+source-level constant-time portable backend
 ```
 
-The portable field layer is complete for the current milestone: `Gf128` supports addition, subtraction, negation, multiplication, squaring and inversion, and the backend behind it is checked against independent oracles. The Cantor basis, the transforms and the hardware backend are still ahead.
+The portable field layer is complete for the current milestone. `Gf128` supports addition, subtraction, negation, multiplication, squaring, constant-time equality, conditional selection, and inversion through `CtOption<Gf128>`. The portable carry-less multiplication uses a fixed loop with mask-based selection, and the implementation uses `subtle` for sensitive predicates exposed through the field API.
+
+This is a source-level constant-time discipline, not a universal proof about generated machine code or a specific processor. Dedicated timing analysis such as `dudect-bencher` may be added later as an external validation step.
+
+The Cantor basis, the transforms and the hardware backend are still ahead.
 
 Next:
 
